@@ -1,0 +1,23 @@
+/////////////////////////////////////////////////////////////////////////////////////////
+//
+// Materialized View: latest_prices
+// Source Table:      aggregates
+// Description:       Captures the latest record, and therefore price/volume, of every
+//                    symbol. It allows us fast access to the current symbol price 
+//                    without querying the aggregates table.
+//
+/////////////////////////////////////////////////////////////////////////////////////////
+
+.create-or-alter materialized-view latest_prices on table aggregates
+{
+    aggregates
+        | project 
+            symbol,
+            timestamp = end_timestamp_aggregate_window,
+            days_accumulated_volume = todays_accumulated_volume,
+            todays_opening_price,
+            volume_weighted_avg_price,
+            price_direction = iif(opening_price_aggregate_window > closing_price_aggregate_window, "decrease", "increase"),
+            price = closing_price_aggregate_window
+        | summarize arg_max(timestamp, *) by symbol
+}

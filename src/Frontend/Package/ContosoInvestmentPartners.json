@@ -1,0 +1,32 @@
+{
+    "name": "ContosoInvestmentPartners",
+    "displayName": "Investment Partners",
+    "displayNamePlural": "Investment Partners",
+    "editor": {
+      "path": "/contoso-investment-partners"
+    },
+    "icon": {
+      "name": "assets/ContosoInvestmentPartners.png"
+    },
+    "activeIcon": {
+      "name": "assets/ContosoInvestmentPartners.png"
+    },
+    "contextMenuItems": [],
+    "quickActionItems": [],
+    "supportedInMonitoringHub": true,
+    "supportedInDatahubL1": true,
+    "itemJobActionConfig": {
+      "registeredActions": {
+        "detail": {
+          "action": "item.job.detail"
+        },
+        "cancel": {
+          "action": "item.job.cancel"
+        },
+        "retry": {
+          "action": "item.job.retry"
+        }
+      }
+    },
+    "itemJobTypes": ["visualizeData"]
+}

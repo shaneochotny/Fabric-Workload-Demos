@@ -1,0 +1,28 @@
+.execute database script with (ContinueOnErrors=true)
+<|
+    
+    /////////////////////////////////////////////////////////////////////////////////////////
+    //
+    // View: Stock Open/High/Low/Close
+    //
+    // Only used by Copilot and displays the last 6 months OHLC of a provided stock.
+    //
+    /////////////////////////////////////////////////////////////////////////////////////////
+
+    .create-or-alter function with (folder='Views')
+    vw_StockOHLC (var_symbol: string)
+    {
+        daily_ohlc
+            | where ['date'] > ago(180d)
+            | where symbol == toupper(var_symbol)
+            | project 
+                ['date'],
+                symbol,
+                open,
+                close,
+                high,
+                low,
+                volume,
+                change = round(change, 2)
+            | order by ['date']
+    }

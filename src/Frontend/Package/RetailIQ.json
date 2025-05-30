@@ -1,0 +1,32 @@
+{
+    "name": "RetailIQ",
+    "displayName": "RetailIQ",
+    "displayNamePlural": "RetailIQ",
+    "editor": {
+      "path": "/retailiq"
+    },
+    "icon": {
+      "name": "assets/RetailIQ.png"
+    },
+    "activeIcon": {
+      "name": "assets/RetailIQ.png"
+    },
+    "contextMenuItems": [],
+    "quickActionItems": [],
+    "supportedInMonitoringHub": true,
+    "supportedInDatahubL1": true,
+    "itemJobActionConfig": {
+      "registeredActions": {
+        "detail": {
+          "action": "item.job.detail"
+        },
+        "cancel": {
+          "action": "item.job.cancel"
+        },
+        "retry": {
+          "action": "item.job.retry"
+        }
+      }
+    },
+    "itemJobTypes": ["visualizeData"]
+}

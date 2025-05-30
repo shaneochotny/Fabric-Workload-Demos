@@ -1,0 +1,42 @@
+/////////////////////////////////////////////////////////////////////////////////////////
+//
+// Table:        raw_daily_ohlc
+// Data Source:  `Historical Stock Ingestion` Fabric Pipeline importing from Polygon.IO
+// Description:  Daily symbols open, high, low, close values which are aggregated at the 
+//               day level. Data is in it's raw JSON format.
+//
+// Polygon.IO Details:
+// URL:         https://polygon.io/docs/rest/stocks/aggregates/previous-day-bar
+// Description: Retrieve the previous trading day's open, high, low, and close (OHLC) 
+//              data for a specified stock ticker. This endpoint provides key pricing 
+//              metrics, including volume, to help users assess recent performance and 
+//              inform trading strategies.
+//
+/////////////////////////////////////////////////////////////////////////////////////////
+
+.create table raw_daily_ohlc (
+    symbol: string,
+    record: dynamic
+) with (
+    folder = 'Ingestion',
+    docstring = 'Raw ingestion for daily stock OHLC.'
+)
+
+
+/////////////////////////////////////////////////////////////////////////////////////////
+//
+// Retention Policy
+//
+// Policy for storing only a days worth of data in raw_daily_ohlc for troubleshooting. 
+// It acts as a real-time staging table where JSON is ingested and the below Function 
+// executes to transform the event and lands it in the final table.
+//
+/////////////////////////////////////////////////////////////////////////////////////////
+
+.alter table raw_daily_ohlc policy retention
+```
+{
+    "SoftDeletePeriod": "01.00:00:00",
+    "Recoverability": "Disabled"
+}
+```

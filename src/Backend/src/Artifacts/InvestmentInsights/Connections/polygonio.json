@@ -1,0 +1,24 @@
+{
+    "connectivityType": "ShareableCloud",
+    "displayName": "Polygon.io",
+    "connectionDetails": {
+        "type": "WebForPipeline",
+        "creationMethod": "WebForPipeline.Contents",
+        "parameters": [
+            {
+                "dataType": "Text",
+                "name": "baseUrl",
+                "value": "https://api.polygon.io"
+            }
+        ]
+    },
+    "privacyLevel": "None",
+    "credentialDetails": {
+        "credentials": {
+            "credentialType": "Anonymous"
+        },
+        "singleSignOnType": "None",
+        "connectionEncryption": "NotEncrypted",
+        "skipTestConnection": false
+    }
+}

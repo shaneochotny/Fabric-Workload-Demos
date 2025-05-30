@@ -1,0 +1,15 @@
+/////////////////////////////////////////////////////////////////////////////////////////
+//
+// Table:        raw_market_stream
+// Data Source:  Eventstream
+// Description:  The raw incoming stream from Polygon.IO -> JSON -> Eventstream.
+//
+/////////////////////////////////////////////////////////////////////////////////////////
+
+.create table raw_market_stream (
+    message: dynamic, 
+    processed_time: datetime
+) with (
+    folder = "Ingestion",
+    docstring = 'Real-time market stream.'
+)

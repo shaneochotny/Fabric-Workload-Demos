@@ -1,0 +1,32 @@
+{
+    "name": "InvestmentInsights",
+    "displayName": "Investment Insights",
+    "displayNamePlural": "Investment Insights",
+    "editor": {
+      "path": "/investment-insights"
+    },
+    "icon": {
+      "name": "assets/InvestmentInsights.png"
+    },
+    "activeIcon": {
+      "name": "assets/InvestmentInsights.png"
+    },
+    "contextMenuItems": [],
+    "quickActionItems": [],
+    "supportedInMonitoringHub": true,
+    "supportedInDatahubL1": true,
+    "itemJobActionConfig": {
+      "registeredActions": {
+        "detail": {
+          "action": "item.job.detail"
+        },
+        "cancel": {
+          "action": "item.job.cancel"
+        },
+        "retry": {
+          "action": "item.job.retry"
+        }
+      }
+    },
+    "itemJobTypes": ["visualizeData"]
+}

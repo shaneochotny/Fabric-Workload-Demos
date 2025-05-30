@@ -1,0 +1,8 @@
+.katex * {
+	font-family: var(--mantine-font-family);
+	font-size: 14px;
+}
+
+.katex-display > .katex {
+	white-space: unset;
+}

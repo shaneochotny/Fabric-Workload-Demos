@@ -1,0 +1,88 @@
+{
+    "name": "Product",
+    "displayName": "Fabric Workload Demos",
+    "fullDisplayName": "Fabric Workload Demos",
+    "description": "Examples on how organizations can build and integrate applications with Fabric.",
+    "favicon": "assets/InvestmentInsights.png",
+    "icon": {
+      "name": "assets/InvestmentInsights.png"
+    },
+    "homePage": {
+      "learningMaterials": [
+        {
+          "title": "Investment Insights",
+          "description": "Financial Advisor Dashboard",
+          "introduction": "Financial Advisor Dashboard.",
+          "onClick": {
+            "action": "open.investmentInsightsDemo"
+          },
+          "image": "assets/InvestmentInsights.png"
+        },
+        {
+          "title": "RetailIQ",
+          "description": "Retail IQ Dashboard",
+          "introduction": "Retail IQ Dashboard.",
+          "onClick": {
+            "action": "open.retailIQ"
+          },
+          "image": "assets/RetailIQ.png"
+        }
+      ],
+      "newSection": {
+        "customActions": [
+            {
+                "title": "Investment Insights",
+                "icon": {
+                  "name": "assets/InvestmentInsights.png"
+                },
+                "onClick": {
+                  "action": "open.investmentInsightsDemo"
+                }
+            }
+        ]},
+        "recommendedItemTypes": []
+    },
+    "createExperience": {
+      "description": "Investment Insights",
+      "cards": [
+        {
+          "title": "Investment Insights",
+          "description": "Create an Investment Insights Dashboard",
+          "icon": {
+            "name": "assets/InvestmentInsights.png"
+          },
+          "icon_small": {
+            "name": "assets/InvestmentInsights.png"
+          },
+          "onClick": {
+            "action": "open.createInvestmentInsights"
+          },
+          "availableIn": [
+            "create-hub",
+            "workspace-plus-new",
+            "workspace-plus-new-teams"
+          ],
+          "itemType": "InvestmentInsights"
+        }
+      ]
+    },
+    "productDetail": {
+      "publisher": "Shane Ochotny",
+      "slogan": "Example Fabric Workloads",
+      "description": "Examples on how organizations can build and integrate applications with Fabric.",
+      "image": {
+        "mediaType": 0,
+        "source": "assets/BannerMedium.png"
+      },
+      "slideMedia": [],
+      "supportLink": {
+        "documentation": {"url": "https://example.com/documentation"},
+        "certification": {"url": "https://example.com/certification"},
+        "help": {"url": "https://example.com/help"},
+        "privacy": {"url": "https://example.com/privacy"},
+        "terms": {"url": "https://example.com/terms"},
+        "license": {"url": "https://example.com/license"}
+      }
+    },
+    "compatibleItemTypes" : ["Lakehouse"]
+}

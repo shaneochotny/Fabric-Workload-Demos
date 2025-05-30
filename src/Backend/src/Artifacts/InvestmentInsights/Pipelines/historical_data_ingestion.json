@@ -1,0 +1,224 @@
+{
+    "properties": {
+      "activities": [
+        {
+          "name": "Get Stocks",
+          "description": "Get the list of stock symbols from Eventhouse we should fetch data for.",
+          "type": "Lookup",
+          "dependsOn": [],
+          "policy": {
+            "timeout": "0.12:00:00",
+            "retry": 0,
+            "retryIntervalInSeconds": 30,
+            "secureOutput": false,
+            "secureInput": false
+          },
+          "typeProperties": {
+            "source": {
+              "type": "KustoDatabaseSource",
+              "query": "stocks | project symbol",
+              "queryTimeout": "01:00:00",
+              "noTruncation": true
+            },
+            "firstRowOnly": false,
+            "datasetSettings": {
+              "annotations": [],
+              "linkedService": {
+                "name": "Investments",
+                "properties": {
+                  "annotations": [],
+                  "type": "KustoDatabase",
+                  "typeProperties": {
+                    "workspaceId": "{{WORKSPACE_ID}}",
+                    "endpoint": "{{EVENTHOUSE_ENDPOINT}}",
+                    "database": "{{KQLDATABASE_ID}}"
+                  }
+                }
+              },
+              "type": "KustoDatabaseTable",
+              "schema": [],
+              "typeProperties": {}
+            }
+          }
+        },
+        {
+          "name": "For Each Stock",
+          "description": "Iterate over each stock symbol and call the Polygon.io API to retrieve the data.",
+          "type": "ForEach",
+          "dependsOn": [
+            {
+              "activity": "Set Start Date",
+              "dependencyConditions": [
+                "Succeeded"
+              ]
+            }
+          ],
+          "typeProperties": {
+            "items": {
+              "value": "@activity('Get Stocks').output.value",
+              "type": "Expression"
+            },
+            "isSequential": true,
+            "activities": [
+              {
+                "name": "Polygon API",
+                "description": "Calls the Polygon.io API for the provided stock symbol and timeframe and inserts the results into Eventhouse.",
+                "type": "Copy",
+                "dependsOn": [],
+                "policy": {
+                  "timeout": "0.12:00:00",
+                  "retry": 0,
+                  "retryIntervalInSeconds": 30,
+                  "secureOutput": false,
+                  "secureInput": false
+                },
+                "typeProperties": {
+                  "source": {
+                    "type": "RestSource",
+                    "httpRequestTimeout": "00:01:40",
+                    "requestInterval": "00.00:00:00.010",
+                    "requestMethod": "GET",
+                    "paginationRules": {
+                      "supportRFC5988": "true"
+                    },
+                    "datasetSettings": {
+                      "annotations": [],
+                      "type": "RestResource",
+                      "typeProperties": {
+                        "relativeUrl": {
+                          "value": "@concat('/v2/aggs/ticker/', item().symbol,'/range/1/day/', formatDateTime(getPastTime(pipeline().parameters.daysToIngest, 'Day'), 'yyyy-MM-dd'),'/', formatDateTime(getPastTime(1, 'Day'), 'yyyy-MM-dd'),'?adjusted=true&sort=asc&apiKey=', pipeline().parameters.polygonAPIKey)",
+                          "type": "Expression"
+                        }
+                      },
+                      "schema": [],
+                      "externalReferences": {
+                        "connection": "{{POLYGON_CONNECTION_ID}}"
+                      }
+                    }
+                  },
+                  "sink": {
+                    "type": "KustoDatabaseSink",
+                    "ingestionMappingName": "",
+                    "datasetSettings": {
+                      "annotations": [],
+                      "linkedService": {
+                        "name": "Investments",
+                        "properties": {
+                          "annotations": [],
+                          "type": "KustoDatabase",
+                          "typeProperties": {
+                            "workspaceId": "{{WORKSPACE_ID}}",
+                            "endpoint": "{{EVENTHOUSE_ENDPOINT}}",
+                            "database": "{{KQLDATABASE_ID}}"
+                          }
+                        }
+                      },
+                      "type": "KustoDatabaseTable",
+                      "schema": [],
+                      "typeProperties": {
+                        "table": "raw_daily_ohlc"
+                      }
+                    }
+                  },
+                  "enableStaging": false,
+                  "translator": {
+                    "type": "TabularTranslator",
+                    "mappings": [
+                      {
+                        "source": {
+                          "name": "ticker",
+                          "type": "String"
+                        },
+                        "sink": {
+                          "name": "symbol",
+                          "type": "String",
+                          "physicalType": "string"
+                        }
+                      },
+                      {
+                        "source": {
+                          "name": "results",
+                          "type": "String"
+                        },
+                        "sink": {
+                          "name": "record",
+                          "type": "String",
+                          "physicalType": "dynamic"
+                        }
+                      }
+                    ],
+                    "collectionReference": "",
+                    "typeConversion": true,
+                    "typeConversionSettings": {
+                      "allowDataTruncation": true,
+                      "treatBooleanAsNumber": false,
+                      "dateFormat": "yyyy-MM-dd"
+                    },
+                    "columnFlattenSettings": {
+                      "treatArrayAsString": false,
+                      "treatStructAsString": true
+                    }
+                  }
+                }
+              },
+              {
+                "name": "Wait",
+                "description": "Wait so we don't hit the Polygon.io API throttling rate limit on the free tier when we retrieve the next stock symbol data.",
+                "type": "Wait",
+                "dependsOn": [
+                  {
+                    "activity": "Polygon API",
+                    "dependencyConditions": [
+                      "Completed"
+                    ]
+                  }
+                ],
+                "typeProperties": {
+                  "waitTimeInSeconds": 20
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "Set Start Date",
+          "description": "Calculate the start date in the format of yyyy-MM-dd for the Polygon.io API based on the daysToIngest parameter.",
+          "type": "SetVariable",
+          "dependsOn": [
+            {
+              "activity": "Get Stocks",
+              "dependencyConditions": [
+                "Succeeded"
+              ]
+            }
+          ],
+          "policy": {
+            "secureOutput": false,
+            "secureInput": false
+          },
+          "typeProperties": {
+            "variableName": "startDate",
+            "value": {
+              "value": "@formatDateTime(getPastTime(pipeline().parameters.daysToIngest, 'Day'), 'yyyy-MM-dd')",
+              "type": "Expression"
+            }
+          }
+        }
+      ],
+      "parameters": {
+        "daysToIngest": {
+          "type": "int",
+          "defaultValue": 1
+        },
+        "polygonAPIKey": {
+          "type": "string",
+          "defaultValue": "{{POLYGON_API_KEY}}"
+        }
+      },
+      "variables": {
+        "startDate": {
+          "type": "String"
+        }
+      }
+    }
+  }

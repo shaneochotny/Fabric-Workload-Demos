@@ -1,0 +1,21 @@
+.table {
+  margin-top: 0px;
+  border: none;
+}
+
+.filterSelect {
+  input {
+    font-size: 16px;
+    color: #242424;
+  }
+}
+
+.filterCurrency {
+  font-size: 16px;
+  color: #117865;
+}
+
+.filterText {
+  font-size: 16px;
+  color: #242424;
+}

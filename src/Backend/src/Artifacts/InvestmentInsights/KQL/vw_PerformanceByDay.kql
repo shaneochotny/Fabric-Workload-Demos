@@ -1,0 +1,173 @@
+.execute database script with (ContinueOnErrors=true)
+<|
+    /////////////////////////////////////////////////////////////////////////////////////////
+    //
+    // View: Performance by Day
+    //
+    // Generates the time-series data for the Portfolio Performance chart in the UI which 
+    // consists of the portfolios calculated value. The value is calculated based on any 
+    // holdings buys/sells and the daily closing price.
+    //
+    /////////////////////////////////////////////////////////////////////////////////////////
+
+    .create-or-alter function with (folder='Views')
+    vw_PerformanceByDay (
+        var_portfolio_id: int,                      // Portfolio ID of the Client
+        var_days: string = '',                      // Days to show data for ['', '1D', '1M', '6M', 'YTD', '1Y']
+        var_symbol: string = 'Entire Portfolio'     // ['Entire Portfolio', {symbol}]
+    )
+    {
+        // Get the holdings for the provided portfolio
+        let stock_lots = materialize(
+            holdings
+                | where portfolio_id == var_portfolio_id
+                | project-rename quantity_change = quantity
+        );
+        let start_date  = toscalar(stock_lots | summarize startofday(min(['date'])));
+        // The holdings table only has the buy/sell dates of a holding in the portfolio. We 
+        // need to fill in the dates and calculate the daily quantity of each stock in the 
+        // portfolio based on buys/sells.
+        let daily_stock_lots = materialize(
+            stock_lots
+                | make-series quantity_change = sum(quantity_change) on ['date'] from start_date to endofday(now()) step 1d by symbol   // Get the first date of a transaction in the portfolio
+                | mv-expand ['date'] to typeof(datetime), quantity_change to typeof(int)
+                | order by 
+                    symbol, 
+                    ['date'] asc
+                | extend quantity_total = row_cumsum(quantity_change, symbol != prev(symbol))                                           // Cumulatively sum up the volume for each stock symbol
+                | join kind=leftouter stock_lots on $left.symbol == $right.symbol and $left.['date'] == $right.['date']                 // Join back in the other columns we want
+                | project
+                    symbol,
+                    ['date'],
+                    quantity_change,
+                    quantity_total,
+                    transaction_type,
+                    buy_price = iif(isnotempty(buy_price), buy_price, toreal(0)),
+                    sell_price = iif(isnotempty(sell_price), sell_price, toreal(0))
+                | order by 
+                    symbol, 
+                    ['date'] asc
+        );
+        // Join the daily_ohlc table to get the daily close price for the stock symbols
+        // in the portfolio.
+        let daily_value = (
+            daily_stock_lots
+                | lookup daily_ohlc on ['date'], symbol
+                | project
+                    symbol,
+                    ['date'],
+                    quantity_change,
+                    quantity_total,
+                    transaction_type,
+                    buy_price = iif(isnotempty(buy_price), buy_price, toreal(0)),
+                    sell_price = iif(isnotempty(sell_price), sell_price, toreal(0)),
+                    close_price = close
+                | order by 
+                    symbol, 
+                    ['date'] asc
+                // Fill in weekends/holidays where there is no close_price with the previous
+                // close_price so we can still calculate the daily portfolio value.
+                | partition hint.strategy=native by symbol
+                    (
+                        order by ['date'] asc 
+                            | scan with (step s: true => close_price = coalesce(close_price, s.close_price);)
+                    )
+                // Calculate the holding value for each stock symbol and day
+                | extend value = quantity_total * close_price
+                | where ['date'] < startofday(now())
+        );
+        // Get the real-time prices from the stock_transactions stream for today in 10 minute increments.
+        let current_price_transactions = (
+            stock_transactions
+                | where startofday(end_timestamp_aggregate_window) == startofday(now())
+                | summarize 
+                    end_timestamp_aggregate_window = arg_max(end_timestamp_aggregate_window, *) 
+                    by 
+                    bin(end_timestamp_aggregate_window, 10m), 
+                    symbol
+        );
+        // Get the current real-time prices from the stock_transactions stream.
+        let current_prices = (
+            stock_transactions
+                | summarize arg_max(end_timestamp_aggregate_window, *) by symbol
+        );
+        // Get the previous day close price in case we're not receiving real-time price updates
+        let previous_day_close = (
+            daily_ohlc
+                | summarize arg_max(['date'], *) by symbol
+                | project 
+                    symbol,
+                    previous_close = close
+        );
+        // Get the value of the stocks in the portfolio from the real-time prices
+        // for the current day.
+        let 1d_realtime_value = (
+            daily_stock_lots
+                | where ['date'] == startofday(now())
+                | join kind=leftouter current_prices on $left.symbol == $right.symbol
+                | join previous_day_close on $left.symbol == $right.symbol
+                | extend closing_price_aggregate_window = iif(isempty(closing_price_aggregate_window), previous_close, closing_price_aggregate_window)
+                | extend value = quantity_total * closing_price_aggregate_window
+                | project
+                    symbol,
+                    ['date'],
+                    quantity_change,
+                    quantity_total,
+                    transaction_type,
+                    buy_price = iif(isnotempty(buy_price), buy_price, toreal(0)),
+                    sell_price = iif(isnotempty(sell_price), sell_price, toreal(0)),
+                    value
+        );
+        // Get the value of the stocks in the portfolio from the real-time prices
+        // for the current day in 10 minute increments. This is for the 1D view.
+        let 10m_realtime_value = (
+            daily_stock_lots
+                | where ['date'] == startofday(now())
+                | join kind=leftouter current_price_transactions on $left.symbol == $right.symbol
+                | extend value = quantity_total * closing_price_aggregate_window
+                | project
+                    symbol,
+                    ['date'] = end_timestamp_aggregate_window,
+                    quantity_change,
+                    quantity_total,
+                    transaction_type,
+                    buy_price = iif(isnotempty(buy_price), buy_price, toreal(0)),
+                    sell_price = iif(isnotempty(sell_price), sell_price, toreal(0)),
+                    value
+        );
+        // Join the historic portfolio values with the real-time current day.
+        let daily_view = (
+            union  daily_value, 1d_realtime_value
+                | where var_symbol == 'Entire Portfolio' or symbol == var_symbol
+                | where case
+                    (
+                        var_days == '1M', ['date'] > ago(30d), 
+                        var_days == '6M', ['date'] > ago(180d), 
+                        var_days == 'YTD', ['date'] > startofyear(now()), 
+                        var_days == '1Y', ['date'] > ago(365d), 
+                        isnotempty(['date'])
+                    )
+                | summarize 
+                    portfolio_value = round(sum(value), 2) 
+                    by
+                    ['date'], 
+                    symbol = var_symbol
+        );
+        let market_open = todatetime(strcat(format_datetime(now(), 'yyyy-MM-dd'), ' 14:40:00.0000'));
+        let latest_real_time = toscalar(10m_realtime_value | summarize max(['date']));
+        let day_view = (
+            10m_realtime_value
+                | where var_symbol == 'Entire Portfolio' or symbol == var_symbol
+                | summarize 
+                    portfolio_value = round(sum(value), 2) 
+                    by 
+                    ['date'], 
+                    symbol = var_symbol
+                | order by ['date'] desc
+                | where ['date'] between (market_open .. latest_real_time )
+                | make-series portfolio_value = sum(portfolio_value) on ['date'] from market_open to endofday(now()) step 10m by symbol // Fill in 0 values in 10 minute increments for the rest of the day
+                | mv-expand ['date'] to typeof(datetime), portfolio_value to typeof(real)
+                | extend portfolio_value = iif(portfolio_value == 0, real(null), portfolio_value) // Replace the 0 values with null so the chart renders, but doesn't consider 0 as the min
+        );
+        union (day_view | where var_days == '1D'), (daily_view | where var_days != '1D')
+    }

@@ -1,0 +1,32 @@
+/////////////////////////////////////////////////////////////////////////////////////////
+//
+// Table:        stocks
+// Source Table: Manual
+// Description:  This table contains a small list of symbols which we use to retrieve
+//               the daily_ohlc via the `Historical Stock Ingestion` Fabric Pipeline
+//               importing from Polygon.IO so we're not retrieving everything. The 
+//               Pipeline will automatically start pulling daily ohlc for any symbols
+//               added to this table.
+//
+//               The table is static and not updated by anything, but used by both the
+//               pipeline and views.
+//
+/////////////////////////////////////////////////////////////////////////////////////////
+
+.create table stocks (
+    company: string,
+    symbol: string,
+    sector: string,
+    expense_ratio: real
+)
+
+
+/////////////////////////////////////////////////////////////////////////////////////////
+//
+// Mirroring Policy
+//
+// Mirror the table to Onelake. 
+//
+/////////////////////////////////////////////////////////////////////////////////////////
+
+.alter table stocks policy mirroring dataformat=parquet with (IsEnabled=true)

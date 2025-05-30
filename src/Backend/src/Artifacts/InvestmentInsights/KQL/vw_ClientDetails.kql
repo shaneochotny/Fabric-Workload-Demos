@@ -1,0 +1,16 @@
+.execute database script with (ContinueOnErrors=true)
+<|
+    /////////////////////////////////////////////////////////////////////////////////////////
+    //
+    // View: Client Details
+    //
+    // Client details and demographics
+    //
+    /////////////////////////////////////////////////////////////////////////////////////////
+
+    .create-or-alter function with (folder='Views')
+    vw_ClientDetails (var_portfolioId: int)
+    {
+        portfolios
+            | where portfolio_id == var_portfolioId
+    }

@@ -1,0 +1,17 @@
+.execute database script with (ContinueOnErrors=true)
+<|
+    /////////////////////////////////////////////////////////////////////////////////////////
+    //
+    // View: Portfolio Value
+    //
+    // Displays the total current value of the clients portfolio
+    //
+    /////////////////////////////////////////////////////////////////////////////////////////
+
+    .create-or-alter function with (folder='Views')
+    vw_PortfolioValue (var_portfolioId: int)
+    {
+        vw_HoldingsByType(var_portfolioId)
+            | summarize
+                current_value = round(sum(current_value))
+    }

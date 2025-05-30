@@ -1,0 +1,30 @@
+{
+    "environment": "DEV",
+    "resourceGroup": "DEV-Fabric-Workload-Demos",
+    "azureRegion": "eastus2",
+    "resourceNameSuffix": "123",
+    "resourceTags": {
+        "Environment": "DEV",
+        "Solution": "Fabric Workload Demos"
+    },
+    "authentication": {
+        "entraApplicationClientId": "00000000-0000-0000-0000-000000000000",
+        "entraApplicationClientSecret": "",
+        "entraApplicationAudience": "https://YOUR_DOMAIN/YOUR_PATH/Org.WorkloadSample",
+        "entraApplicationTenantId": "00000000-0000-0000-0000-000000000000"
+    },
+    "copilots": {
+        "investmentInsights": {
+            "eventhouseConnectionString": "MY_EVENTHOUSE_QUERY_URI.z6.kusto.fabric.microsoft.com",
+            "eventhouseDatabase": "Investments",
+            "lakehouseSQLConnectionString": "MY_LAKEHOUSE_SQL_ENDPOINT.datawarehouse.fabric.microsoft.com",
+            "lakehouseSQLDatabase": "Clients"
+        },
+        "retailIQ": {
+            "eventhouseConnectionString": "MY_EVENTHOUSE_QUERY_URI.z6.kusto.fabric.microsoft.com",
+            "eventhouseDatabase": "RetailIQ",
+            "lakehouseSQLConnectionString": "MY_LAKEHOUSE_SQL_ENDPOINT.datawarehouse.fabric.microsoft.com",
+            "lakehouseSQLDatabase": "RetailIQ"
+        }
+    }
+}

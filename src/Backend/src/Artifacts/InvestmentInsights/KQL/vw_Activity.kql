@@ -1,0 +1,77 @@
+.execute database script with (ContinueOnErrors=true)
+<|
+    /////////////////////////////////////////////////////////////////////////////////////////
+    //
+    // View: Activity
+    //
+    // Displays buy/sell transactions for a given portfolio
+    //
+    /////////////////////////////////////////////////////////////////////////////////////////
+
+    .create-or-alter function with (folder='Views')
+    vw_Activity (var_portfolioId: int, var_symbol: string = 'Entire Portfolio')
+    {
+        let current_prices = (
+            // Get the latest stock prices from the real-time stream
+            stock_transactions
+                | summarize arg_max(end_timestamp_aggregate_window, *) by symbol
+        );
+        // Get the previous day close price in case we're not receiving real-time price updates
+        let previous_day_close = (
+            daily_ohlc
+                | summarize arg_max(['date'], *) by symbol
+                | project 
+                    symbol,
+                    previous_close = close
+        );
+        holdings
+            | where portfolio_id == var_portfolioId
+            | where var_symbol == 'Entire Portfolio' or symbol == var_symbol
+            | join kind=leftouter stocks on $left.symbol == $right.symbol
+            | join kind=leftouter current_prices on $left.symbol == $right.symbol
+            | join kind=leftouter previous_day_close on $left.symbol == $right.symbol
+            | extend closing_price_aggregate_window = iif(isempty(closing_price_aggregate_window), previous_close, closing_price_aggregate_window)
+            | project
+                ['date'] = format_datetime(['date'], 'yyyy-MM-dd'),
+                company,
+                symbol,
+                sector,
+                transaction_type = iif(transaction_type == 'buy', 'Buy', 'Sell'),
+                term = case(
+                    position == 'short', 'Short',
+                    position == 'long', 'Long',
+                    ''
+                ),
+                quantity = abs(quantity),
+                buy_price,
+                sell_price,
+                current_price = closing_price_aggregate_window,
+                total_basis = buy_price * abs(quantity),
+                current_value = iif(
+                    transaction_type == 'buy', 
+                    quantity * closing_price_aggregate_window, 
+                    toreal(0)
+                ),
+                percent_change = iif(
+                    transaction_type == 'sell',
+                    (((quantity * sell_price) - (quantity * buy_price)) / (quantity * buy_price)) * 100,
+                    (((quantity * closing_price_aggregate_window) - (quantity * buy_price)) / (quantity * buy_price)) * 100
+                ),
+                earnings = iif(
+                    transaction_type == 'sell',
+                    (quantity * buy_price) - (quantity * sell_price),
+                    abs((quantity * buy_price) - (quantity * closing_price_aggregate_window))
+                ),
+                amount = iif(
+                    transaction_type == 'buy',
+                    abs(buy_price * quantity),
+                    abs(sell_price * quantity)
+                )
+            | order by ['date'] desc
+            | extend 
+                sell_price = iif(isempty(sell_price), toreal(0), sell_price),
+                current_price = iif(isempty(current_price), toreal(0), current_price),
+                current_value = iif(isempty(current_value), toreal(0), current_value),
+                percent_change = iif(isempty(percent_change), toreal(0), percent_change),
+                earnings = iif(isempty(earnings), toreal(0), earnings)
+    }

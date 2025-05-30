@@ -1,0 +1,85 @@
+
+/////////////////////////////////////////////////////////////////////////////////////////
+//
+// Table:        daily_ohlc
+// Source Table: raw_daily_ohlc
+// Description:  A "gold" table used for reporting. This is a structured table based on 
+//               daily open, high, low, close values at the symbol day level.
+//
+// Polygon.IO Details:
+// URL:         https://polygon.io/docs/rest/stocks/aggregates/previous-day-bar
+// Description: Retrieve the previous trading day's open, high, low, and close (OHLC) 
+//              data for a specified stock ticker. This endpoint provides key pricing 
+//              metrics, including volume, to help users assess recent performance and 
+//              inform trading strategies.
+//
+/////////////////////////////////////////////////////////////////////////////////////////
+
+.create table daily_ohlc (
+    ['date']: datetime,
+    symbol: string,
+    open: real,
+    close: real,
+    high: real,
+    low: real,
+    volume: real,
+    after_hours: real,
+    pre_market: real,
+    change: real
+) with (
+    docstring = 'Daily stock Open, High, Low, Close.'
+)
+    
+
+/////////////////////////////////////////////////////////////////////////////////////////
+//
+// Mirroring Policy
+//
+// Mirror the table to Onelake. 
+//
+/////////////////////////////////////////////////////////////////////////////////////////
+
+.alter table daily_ohlc policy mirroring dataformat=parquet with (IsEnabled=true)
+
+
+/////////////////////////////////////////////////////////////////////////////////////////
+//
+// Transformation Function
+//
+// Parse the raw JSON data from the raw_daily_ohlc table into the structured 
+// daily_ohlc table.
+//
+/////////////////////////////////////////////////////////////////////////////////////////
+
+.create-or-alter function with (
+    folder='Ingestion',
+    docstring = 'Raw transformation'
+)
+i_raw_daily_ohlc()
+{
+    raw_daily_ohlc
+        | project 
+            ['date'] = startofday(unixtime_milliseconds_todatetime(toreal(record.t))),
+            symbol,
+            open = toreal(record.o),
+            close = toreal(record.c),
+            high = toreal(record.h),
+            low = toreal(record.l),
+            volume = toreal(record.v),
+            after_hours = toreal(0),
+            pre_market = toreal(0),
+            change = (toreal(record.c) - toreal(record.o)) / toreal(record.o) * 100
+}
+
+
+/////////////////////////////////////////////////////////////////////////////////////////
+//
+// Update Policy
+//
+// Automatically executes the above i_raw_daily_ohlc Function on new JSON data ingested 
+// into i_raw_daily_ohlc and inserts the parsed data into daily_ohlc.
+//
+/////////////////////////////////////////////////////////////////////////////////////////
+
+.alter table daily_ohlc policy update 
+@'[{ "IsEnabled": true, "Source": "raw_daily_ohlc", "Query": "i_raw_daily_ohlc()", "IsTransactional": true, "PropagateIngestionProperties": false }]'

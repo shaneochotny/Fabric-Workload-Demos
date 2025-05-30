@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<WorkloadManifestConfiguration xmlns:xsi= "http://www.w3.org/2001/XMLSchema-instance" SchemaVersion="1.0.0">
+  <Workload WorkloadName="Org.WorkloadSample" HostingType="Remote">
+    <Version>1.0.1</Version>
+    <RemoteServiceConfiguration>
+      <CloudServiceConfiguration>
+        <Cloud>Public</Cloud>
+        <AADApp>
+          <!-- Your Azure Entra application registration Application (client) ID -->
+          <AppId>00000000-0000-0000-0000-000000000000</AppId>
+          <!-- Your Azure Entra application registration Authentication Redirect URI -->
+          <!-- Local Development: http://localhost:60006/close -->
+          <!-- Deployment: https://YOUR_FRONTEND_DOMAIN/close -->
+          <RedirectUri>http://localhost:60006/close</RedirectUri>
+          <!-- Your Azure Entra application registration Application ID URI -->
+          <!-- Local Development: api://localdevinstance/AZURE_ENTRA_TENANT_GUID/Org.WorkloadSample/dev -->
+          <!-- Deployment: https://YOUR_DOMAIN/YOUR_PATH/Org.WorkloadSample -->
+          <ResourceId>api://localdevinstance/AZURE_ENTRA_TENANT_GUID/Org.WorkloadSample/dev</ResourceId>
+        </AADApp>
+        <Endpoints>
+          <ServiceEndpoint>
+            <Name>Workload</Name>
+            <!-- Your backend API URI -->
+            <!-- Local Development: Not Used -->
+            <!-- Deployment: https://YOUR_BACKEND_DOMAIN/workload -->
+            <Url>https://YOUR_BACKEND_DOMAIN/workload</Url>
+            <IsEndpointResolutionService>false</IsEndpointResolutionService>
+          </ServiceEndpoint>
+          <ServiceEndpoint>
+            <Name>Frontend</Name>
+            <!-- Your frontend API URI -->
+            <!-- Local Development: Not Used -->
+            <!-- Deployment: https://YOUR_FRONTEND_DOMAIN -->
+            <Url>https://YOUR_FRONTEND_DOMAIN</Url>
+            <IsEndpointResolutionService>false</IsEndpointResolutionService>
+          </ServiceEndpoint>
+        </Endpoints>
+      </CloudServiceConfiguration>
+    </RemoteServiceConfiguration>
+  </Workload>
+</WorkloadManifestConfiguration>

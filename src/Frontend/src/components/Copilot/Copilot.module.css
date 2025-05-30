@@ -1,0 +1,206 @@
+/*
+  Copilot Chat Container
+*/
+
+.copilotContainer {
+  height: calc(100% - 120px);
+  width: 100%;
+  overflow: hidden;
+  display: flex;
+  padding: 0px;
+}
+
+.copilotChatContainer {
+  flex: 1;
+  width: 100%;
+}
+
+.copilotChat {
+  height: 100%;
+  width: 100%;
+  flex-direction: column;
+}
+
+.copilotScrollAreaViewport > div:first-of-type {
+  display: block !important;
+}
+
+.copilotTitleName {
+  font-size: var(--mantine-font-size-md);
+  font-weight: 500;
+}
+
+.copilotSubtitle {
+  font-size: var(--mantine-font-size-sm);
+  color: var(--mantine-color-gray-6);
+}
+
+.copilotUserInput {
+  background-color: #FFFFFF;
+  box-shadow: var(--mantine-shadow-sm);
+  border-radius: var(--mantine-radius-sm);
+  padding: 6px;
+}
+
+/*
+  Copilot Error
+*/
+
+.copilotErrorContainer {
+  padding: var(--mantine-spacing-md);
+  margin: var(--mantine-spacing-xl);
+}
+
+.copilotErrorTitle {
+  margin-top: var(--mantine-spacing-xs);
+  margin-bottom: var(--mantine-spacing-xs);
+  font-weight: 700;
+  color: var(--mantine-color-dark-5);
+  text-transform: uppercase;
+}
+
+.copilotErrorMessage {
+  font-size: var(--mantine-font-size-sm);
+  color: var(--mantine-color-gray-7);
+  text-align: center;
+}
+
+/*
+  Main Copilot Splash Screen
+*/
+
+.sampleQuestionsContainer {
+  background-color: #FFFFFF;
+  border-radius: var(--mantine-radius-lg);
+  padding: var(--mantine-spacing-md);
+}
+
+.sampleQuestionsContainerTitle {
+  font-size: var(--mantine-font-size-xl);
+}
+
+.sampleQuestion {
+  width: 70%;
+  max-width: 520px;
+  height: 100%;
+  background-color: #F3F2F1;
+  padding-top: 2px;
+  padding-bottom: var(--mantine-spacing-md);
+  padding-left: var(--mantine-spacing-md);
+  padding-right: var(--mantine-spacing-md);
+  border-radius: var(--mantine-radius-sm);
+  cursor: pointer;
+}
+
+/*
+  User Message
+*/
+
+.copilotUserMessage {
+  max-width: 90%;
+  background-color: #F3F2F1;
+  padding-top: 6px;
+  padding-bottom: var(--mantine-spacing-lg);
+  padding-left: var(--mantine-spacing-lg);
+  padding-right: var(--mantine-spacing-lg);
+  border-radius: var(--mantine-radius-lg);
+  margin-bottom: var(--mantine-spacing-sm);
+  box-shadow: var(--mantine-shadow-xs);
+}
+
+.copilotUserMessageTitle {
+  color: var(--mantine-color-dark-5);
+  font-size: var(--mantine-font-size-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.copilotUserMessageSubtitle {
+  color: var(--mantine-color-gray-6);
+  font-size: var(--mantine-font-size-xs);
+  text-transform: uppercase;
+}
+
+/*
+  Copilot Message
+*/
+
+.copilotMessageContainer {
+  /*max-width: 90%;*/
+  color: var(--mantine-color-gray-7);
+  padding: var(--mantine-spacing-md);
+  /*background-color: var(--mantine-color-gray-0);*/
+  border-radius: var(--mantine-radius-sm);
+  margin-bottom: var(--mantine-spacing-sm);
+}
+
+.copilotMessageTitle {
+  font-size: var(--mantine-font-size-xs);
+  font-weight: 700;
+  color: var(--mantine-color-dark-5);
+  text-transform: uppercase;
+}
+
+.copilotMessageSubtitle {
+  font-size: var(--mantine-font-size-xs);
+  color: var(--mantine-color-gray-6);
+  text-transform: uppercase;
+}
+
+/*
+  Copilot Thinking
+*/
+
+.copilotThinkingContainer {
+  color: var(--mantine-color-gray-7);
+  padding: var(--mantine-spacing-md);
+  margin: var(--mantine-spacing-xl);
+}
+
+.copilotThinkingTitle {
+  font-size: var(--mantine-font-size-xs);
+  font-weight: 700;
+  color: var(--mantine-color-dark-5);
+  text-transform: uppercase;
+}
+
+.copilotThinkingMessage {
+  font-size: var(--mantine-font-size-sm);
+  color: var(--mantine-color-gray-7);
+  text-align: center;
+}
+
+/*
+  Markdown Viewer
+*/
+
+.p, .li, .td, .th {
+  color: var(--mantine-color-gray-7);
+  font-size: var(--mantine-font-size-sm);
+  margin-bottom: 0;
+  overflow-wrap: break-word;
+}
+
+.ol, .ul {
+  margin-top: 4px;
+  margin-bottom: 4px;
+}
+
+.td, .th {
+  border-bottom: 1px solid var(--mantine-color-gray-2);
+}
+
+.th {
+  padding-right: 8px;
+}
+
+.h1, .h2, .h3, .h4, .h5 {
+  margin-bottom: 0px;
+  font-size: var(--mantine-font-size-md);
+  font-weight: 500;
+  color: var(--mantine-color-gray-8);
+}
+
+.h5 {
+  font-size: var(--mantine-font-size-sm);
+}

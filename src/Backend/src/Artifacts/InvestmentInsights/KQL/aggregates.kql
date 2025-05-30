@@ -1,0 +1,87 @@
+/////////////////////////////////////////////////////////////////////////////////////////
+//
+// Table:        aggregates
+// Source Table: raw_market_stream
+// Description:  A "gold" table used for reporting. This is a structured table based on 
+//               the incoming stream of Polygon.IO -> JSON -> Eventstream "aggregates".
+//               We parse the JSON, filter for aggregates ($.ev == A), and land in this 
+//               table.
+//
+// Polygon.IO Details:
+// URL:         https://polygon.io/docs/websocket/stocks/aggregates-per-second
+// Description: Stream second-by-second aggregated OHLC (Open, High, Low, Close) and 
+//              volume data for specified tickers via WebSocket. These aggregates are 
+//              updated continuously in Eastern Time (ET) and cover pre-market, regular, 
+//              and after-hours sessions. Each bar is constructed solely from qualifying 
+//              trades that meet specific conditions; if no eligible trades occur within 
+//              a given minute, no bar is emitted. By providing a steady flow of 
+//              aggregate bars, this endpoint enables users to track intraday price 
+//              movements, refine trading strategies, and power live data visualizations.
+//
+/////////////////////////////////////////////////////////////////////////////////////////
+
+.create table aggregates (
+    symbol: string, 
+    volume: int, 
+    todays_accumulated_volume: int, 
+    todays_opening_price: real, 
+    volume_weighted_avg_price: real, 
+    opening_price_aggregate_window: real, 
+    closing_price_aggregate_window: real, 
+    high_price_aggregate_window: real, 
+    low_price_aggregate_window: real, 
+    todays_volume_weighted_avg_price: real, 
+    average_trade_size_aggregate_window: int, 
+    start_timestamp_aggregate_window: datetime, 
+    end_timestamp_aggregate_window: datetime
+) with (
+    docstring = 'Real-time aggregate market stream.'
+)
+
+.alter table aggregates policy streamingingestion '{"IsEnabled": true}'
+
+/////////////////////////////////////////////////////////////////////////////////////////
+//
+// Transformation Function
+//
+// Parse the raw JSON data from the raw_market_stream table into the structured 
+// aggregates table.
+//
+/////////////////////////////////////////////////////////////////////////////////////////
+
+.create-or-alter function with (
+    folder='Ingestion',
+    docstring = 'Raw aggregations transformation'
+)
+i_raw_market_aggregations()
+{
+    raw_market_stream
+        | where message.ev == "A"
+        | project 
+            symbol = tostring(message.sym),
+            volume = toint(message.v),
+            todays_accumulated_volume = toint(message.av),
+            todays_opening_price = toreal(message.op),
+            volume_weighted_avg_price = toreal(message.vw),
+            opening_price_aggregate_window = toreal(message.o),
+            closing_price_aggregate_window = toreal(message.c),
+            high_price_aggregate_window = toreal(message.h),
+            low_price_aggregate_window = toreal(message.l),
+            todays_volume_weighted_avg_price = toreal(message.a),
+            average_trade_size_aggregate_window = toint(message.z),
+            start_timestamp_aggregate_window = unixtime_milliseconds_todatetime(tolong(message.s)),
+            end_timestamp_aggregate_window = unixtime_milliseconds_todatetime(tolong(message.e))
+}
+
+
+/////////////////////////////////////////////////////////////////////////////////////////
+//
+// Update Policy
+//
+// Executes the above i_raw_market_aggregations() on new records streamed into the 
+// raw_market_stream table.
+//
+/////////////////////////////////////////////////////////////////////////////////////////
+
+.alter table aggregates policy update 
+@'[{ "IsEnabled": true, "Source": "raw_market_stream", "Query": "i_raw_market_aggregations()", "IsTransactional": true, "PropagateIngestionProperties": false }]'

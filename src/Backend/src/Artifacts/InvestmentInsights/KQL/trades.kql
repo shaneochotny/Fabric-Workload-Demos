@@ -1,0 +1,80 @@
+/////////////////////////////////////////////////////////////////////////////////////////
+//
+// Table:        trades
+// Source Table: raw_market_stream
+// Description:  A "gold" table used for reporting. This is a structured table based on 
+//               the incoming stream of Polygon.IO -> JSON -> Eventstream "trades". We 
+//               parse the JSON, filter for trades ($.ev == T), and land in this table.
+//
+// Polygon.IO Details:
+// URL:         https://polygon.io/docs/websocket/stocks/trades
+// Description: Stream tick-level trade data for stock tickers via WebSocket. Each 
+//              message delivers key trade details (price, size, exchange, conditions, 
+//              and timestamps) as they occur, enabling users to track market activity, 
+//              power live dashboards, and inform rapid decision-making.
+//
+/////////////////////////////////////////////////////////////////////////////////////////
+
+.create table trades (
+    symbol: string, 
+    exchange_id: int, 
+    trade_id: string, 
+    tape: string, 
+    price: real, 
+    trade_size: int, 
+    trade_conditions: dynamic, 
+    trade_timestamp: datetime, 
+    sequence_number: int
+) with (
+    docstring = 'Real-time trades market stream.'
+)
+
+.alter table trades policy streamingingestion '{"IsEnabled": true}'
+
+
+/////////////////////////////////////////////////////////////////////////////////////////
+//
+// Transformation Function
+//
+// Parse the raw JSON data from the raw_market_stream table into the structured 
+// trades table.
+//
+/////////////////////////////////////////////////////////////////////////////////////////
+
+.create-or-alter function with (
+    folder='Ingestion',
+    docstring = 'Raw trades transformation'
+)
+i_raw_market_trades()
+{
+    raw_market_stream
+        | where message.ev == "T"
+        | project 
+            symbol = tostring(message.sym),
+            exchange_id = toint(message.x),
+            trade_id = tostring(message.i),
+            tape = case(
+                message.z == 1, "NYSE",
+                message.z == 2, "AMEX",
+                message.z == 3, "Nasdaq",
+                "Other"
+            ),
+            price = toreal(message.p),
+            trade_size = toint(message.s),
+            trade_conditions = message.c,
+            trade_timestamp = unixtime_milliseconds_todatetime(tolong(message.t)),
+            sequence_number = toint(message.q)
+}
+
+
+/////////////////////////////////////////////////////////////////////////////////////////
+//
+// Update Policy
+//
+// Executes the above i_raw_market_trades() on new records streamed into the 
+// raw_market_stream table.
+//
+/////////////////////////////////////////////////////////////////////////////////////////
+
+.alter table trades policy update 
+@'[{ "IsEnabled": true, "Source": "raw_market_stream", "Query": "i_raw_market_trades()", "IsTransactional": true, "PropagateIngestionProperties": false }]'
