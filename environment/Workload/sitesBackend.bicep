@@ -134,9 +134,9 @@ resource keyVaultSecret_ClientSecret 'Microsoft.KeyVault/vaults/secrets@2024-12-
 
 // Key Vault Secret: Azure Entra App Registration Application Tenant Id
 //    Bicep: https://learn.microsoft.com/en-us/azure/templates/microsoft.keyvault/vaults/secrets
-resource keyVaultSecret_ApplicationTenantId 'Microsoft.KeyVault/vaults/secrets@2024-12-01-preview' = {
+resource keyVaultSecret_PublisherTenantId 'Microsoft.KeyVault/vaults/secrets@2024-12-01-preview' = {
   parent: keyVault
-  name: 'ApplicationTenantId'
+  name: 'PublisherTenantId'
   properties: {
     attributes: {
       enabled: true

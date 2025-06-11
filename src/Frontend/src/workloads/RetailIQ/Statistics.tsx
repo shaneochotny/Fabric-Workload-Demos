@@ -60,8 +60,20 @@ export function Statistics({ itemDetails, workloadClient }: Props) {
     queryFn: !kqlDatabaseIsFetching ? () => QueryKQLDatabase(workloadClient, `retail_Categories("${productFilter}")`, kqlDatabase) : skipToken,
     placeholderData: [],
   });
-
+  
   const { isFetching: productsIsFetching, data: products } = useQuery<IRetailProducts[]>({
+    queryKey: ['RetailProducts', categoryFilter],
+    queryFn: !kqlDatabaseIsFetching ? () => QueryKQLDatabase(workloadClient, `retail_Products("${categoryFilter}")`, kqlDatabase) : skipToken,
+    placeholderData: [],
+  });
+  
+  const { isFetching: revenueStatsIsFetching, data: revenueStats } = useQuery<IRetailRevenueStats[]>({
+    queryKey: ['RetailRevenueStats', storeFilter, categoryFilter, productFilter],
+    queryFn: !kqlDatabaseIsFetching ? () => QueryKQLDatabase(workloadClient, `retail_RevenueStats("${storeFilter}", "${categoryFilter}", "${productFilter}")`, kqlDatabase) : skipToken,
+    placeholderData: [{ revenue: 0, profit: 0, unitsSold: 0, inventoryOnHand: 0 }],
+  });
+
+  /* const { isFetching: productsIsFetching, data: products } = useQuery<IRetailProducts[]>({
     queryKey: ['RetailProducts', categoryFilter],
     queryFn: () => QueryKQLDatabase(
       workloadClient, 
@@ -77,9 +89,9 @@ export function Statistics({ itemDetails, workloadClient }: Props) {
       }
     ),
     placeholderData: [],
-  });
+  }); */
 
-  const { isFetching: revenueStatsIsFetching, data: revenueStats } = useQuery<IRetailRevenueStats[]>({
+  /* const { isFetching: revenueStatsIsFetching, data: revenueStats } = useQuery<IRetailRevenueStats[]>({
     queryKey: ['RetailRevenueStats', storeFilter, categoryFilter, productFilter],
     queryFn: () => QueryKQLDatabase(
       workloadClient, 
@@ -95,7 +107,7 @@ export function Statistics({ itemDetails, workloadClient }: Props) {
       }
     ),
     placeholderData: [{ revenue: 0, profit: 0, unitsSold: 0, inventoryOnHand: 0 }],
-  });
+  }); */
 
   return (
     <Container size="xl" mb="sm" fluid>
